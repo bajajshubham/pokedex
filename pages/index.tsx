@@ -39,6 +39,12 @@ export default function Page({ pokemons, totalCount, page, filterName, pokemonDe
     router.push(`/?name=${searchedValue.trim()}&page=1`)
   }
 
+  function closeModal() {
+    const { pokemon, ...rest } = router.query
+    const query = new URLSearchParams(rest as Record<string, string>).toString()
+    router.push(`/?${query}`, undefined, { shallow: false })
+  }
+
   // Render data...
   return (
     <div className="p-5">
@@ -69,7 +75,7 @@ export default function Page({ pokemons, totalCount, page, filterName, pokemonDe
       </div>
 
 
-      {pokemonDetails && <PokemonModal details={pokemonDetails} />}
+      {pokemonDetails && <PokemonModal details={pokemonDetails} closeModal={closeModal} />}
     </div>
   )
 }

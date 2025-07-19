@@ -9,10 +9,11 @@ type PokemonDetails = {
 }
 
 type ModalProps = {
-  details: PokemonDetails
+  details: PokemonDetails,
+  closeModal: () => void
 }
 
-export default function PokemonModal({ details }: ModalProps) {
+export default function PokemonModal({ details, closeModal }: ModalProps) {
   return (
     <div
       className="fixed"
@@ -28,6 +29,8 @@ export default function PokemonModal({ details }: ModalProps) {
         alignItems: 'center',
         zIndex: 9999,
       }}
+
+      onClick={closeModal}
     >
       <div
         style={{ backgroundColor: 'white', padding: '2rem', borderRadius: '8px', minWidth: 320 }}
@@ -40,7 +43,7 @@ export default function PokemonModal({ details }: ModalProps) {
         <p>Weight: {details.weight}</p>
         <p>Types: {details.types.map(t => t.type.name).join(', ')}</p>
         <p>Abilities: {details.abilities.map(a => a.ability.name).join(', ')}</p>
-        <button style={{ marginTop: '1rem' }}>
+        <button style={{ marginTop: '1rem' }} onClick={closeModal}>
           Close
         </button>
       </div>
