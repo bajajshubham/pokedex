@@ -1,4 +1,18 @@
-export default function PokemonModal() {
+type PokemonDetails = {
+  id: number
+  name: string
+  height: number
+  weight: number
+  sprites: { front_default: string | null }
+  abilities: { ability: { name: string } }[]
+  types: { type: { name: string } }[]
+}
+
+type ModalProps = {
+  details: PokemonDetails
+}
+
+export default function PokemonModal({ details }: ModalProps) {
   return (
     <div
       className="fixed"
@@ -19,6 +33,13 @@ export default function PokemonModal() {
         style={{ backgroundColor: 'white', padding: '2rem', borderRadius: '8px', minWidth: 320 }}
         onClick={(e) => e.stopPropagation()}
       >
+        <h2>{details.name.toUpperCase()}</h2>
+        <img src={details.sprites.front_default || ''} alt={details.name} />
+        <p>ID: {details.id}</p>
+        <p>Height: {details.height}</p>
+        <p>Weight: {details.weight}</p>
+        <p>Types: {details.types.map(t => t.type.name).join(', ')}</p>
+        <p>Abilities: {details.abilities.map(a => a.ability.name).join(', ')}</p>
         <button style={{ marginTop: '1rem' }}>
           Close
         </button>

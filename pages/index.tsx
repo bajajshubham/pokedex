@@ -16,7 +16,17 @@ interface Props {
   results: Pokemon[]
 }
 
-export default function Page({ pokemons, totalCount, page, filterName }: InferGetServerSidePropsType<typeof getServerSideProps>) {
+type PokemonDetails = {
+  id: number
+  name: string
+  height: number
+  weight: number
+  sprites: { front_default: string | null }
+  abilities: { ability: { name: string } }[]
+  types: { type: { name: string } }[]
+}
+
+export default function Page({ pokemons, totalCount, page, filterName, pokemonDetails }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const router = useRouter()
   const [searchedValue, setSearchedValue] = useState(filterName)
 
@@ -59,7 +69,7 @@ export default function Page({ pokemons, totalCount, page, filterName }: InferGe
       </div>
 
 
-      <PokemonModal />
+      {pokemonDetails && <PokemonModal details={pokemonDetails} />}
     </div>
   )
 }
@@ -68,6 +78,16 @@ export default function Page({ pokemons, totalCount, page, filterName }: InferGe
 export async function getServerSideProps(context: any) {
   const page: number = Number(context.query.page) || 1
   const filterName = (context.query.name as string) || ''
+  const pokemonName = (context.query.pokemon as string) || ''
+  let pokemonDetails: PokemonDetails | null = null
+
+  if (pokemonName) {
+    const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokemonName.toLowerCase()}`)
+    if (res.ok) {
+      pokemonDetails = await res.json()
+    }
+  }
+
 
   if (filterName) {
     const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${filterName.toLowerCase()}`)
@@ -79,6 +99,7 @@ export async function getServerSideProps(context: any) {
           totalCount: 1,
           page: 1,
           filterName,
+          pokemonDetails
         },
       }
     } else {
@@ -88,6 +109,7 @@ export async function getServerSideProps(context: any) {
           totalCount: 0,
           page: 1,
           filterName,
+          pokemonDetails
         },
       }
     }
@@ -104,7 +126,8 @@ export async function getServerSideProps(context: any) {
         pokemons: data.results,
         totalCount: data.count,
         page,
-        filterName
+        filterName,
+        pokemonDetails
       }
     }
   }
