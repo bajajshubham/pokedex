@@ -15,9 +15,9 @@ interface Props {
   results: Pokemon[]
 }
 
-export default function Page({ pokemons, totalCount, page, }: InferGetServerSidePropsType<typeof getServerSideProps>) {
+export default function Page({ pokemons, totalCount, page, filterName }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const router = useRouter()
-  const [searchedValue, setSearchedValue] = useState("")
+  const [searchedValue, setSearchedValue] = useState(filterName)
 
   function goToPage(newPage: number) {
     router.push(`/?page=${newPage}`)
@@ -25,7 +25,7 @@ export default function Page({ pokemons, totalCount, page, }: InferGetServerSide
 
   function onSearchSubmit(e: React.FormEvent) {
     e.preventDefault()
-    console.log(searchedValue)
+    router.push(`/?name=${searchedValue.trim()}&page=1`)
   }
 
   // Render data...
@@ -63,18 +63,45 @@ export default function Page({ pokemons, totalCount, page, }: InferGetServerSide
 // This gets called on every request
 export async function getServerSideProps(context: any) {
   const page: number = Number(context.query.page) || 1
-  const limit = 20
-  const offset = (page - 1) * limit
-  // Fetch data from external API
-  const res = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${limit}&offset=${offset}`)
-  const data: Props = await res.json()
+  const filterName = (context.query.name as string) || ''
 
-  // Pass data to the page via props
-  return {
-    props: {
-      pokemons: data.results,
-      totalCount: data.count,
-      page,
+  if (filterName) {
+    const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${filterName.toLowerCase()}`)
+    if (res.ok) {
+      const pokemon = await res.json()
+      return {
+        props: {
+          pokemons: [{ name: pokemon.name, url: `https://pokeapi.co/api/v2/pokemon/${pokemon.id}` }],
+          totalCount: 1,
+          page: 1,
+          filterName,
+        },
+      }
+    } else {
+      return {
+        props: {
+          pokemons: [],
+          totalCount: 0,
+          page: 1,
+          filterName,
+        },
+      }
+    }
+  } else {
+    const limit = 20
+    const offset = (page - 1) * limit
+    // Fetch data from external API
+    const res = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${limit}&offset=${offset}`)
+    const data: Props = await res.json()
+
+    // Pass data to the page via props
+    return {
+      props: {
+        pokemons: data.results,
+        totalCount: data.count,
+        page,
+        filterName
+      }
     }
   }
 }
