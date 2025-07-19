@@ -1,3 +1,4 @@
+import PokemonModal from "@/components/PokemonModal"
 import PokemonTable from "@/components/PokemonTable"
 import { InferGetServerSidePropsType } from "next"
 import { useRouter } from "next/router"
@@ -56,6 +57,9 @@ export default function Page({ pokemons, totalCount, page, filterName }: InferGe
           Next
         </button>
       </div>
+
+
+      <PokemonModal />
     </div>
   )
 }
