@@ -1,6 +1,7 @@
 import PokemonTable from "@/components/PokemonTable"
 import { InferGetServerSidePropsType } from "next"
-import {useRouter} from "next/router"
+import { useRouter } from "next/router"
+import { useState } from "react"
 
 type Pokemon = {
   name: string
@@ -16,14 +17,33 @@ interface Props {
 
 export default function Page({ pokemons, totalCount, page, }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const router = useRouter()
+  const [searchedValue, setSearchedValue] = useState("")
 
   function goToPage(newPage: number) {
     router.push(`/?page=${newPage}`)
   }
+
+  function onSearchSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    console.log(searchedValue)
+  }
+
   // Render data...
   return (
     <div className="p-5">
       <h1>Pokédex</h1>
+
+      <form className="mb-5" onSubmit={onSearchSubmit}>
+        <input
+          className="mx-1.5"
+          type="text"
+          placeholder="Filter by exact name"
+          value={searchedValue}
+          onChange={(e) => setSearchedValue(e.target.value)}
+        />
+        <button type="submit">Search</button>
+      </form>
+
       <PokemonTable data={pokemons} />
 
 
