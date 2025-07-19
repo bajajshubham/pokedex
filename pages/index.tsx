@@ -27,8 +27,8 @@ export default function Page({ data }: InferGetServerSidePropsType<typeof getSer
 }
 
 // This gets called on every request
-export async function getServerSideProps() {
-  const page: number = 1
+export async function getServerSideProps(context: any) {
+  const page: number = Number(context.query.page) || 1
   const limit = 20
   const offset = (page - 1) * limit
   // Fetch data from external API
