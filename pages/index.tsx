@@ -19,7 +19,6 @@ export default function Page({ data }: InferGetServerSidePropsType<typeof getSer
   return (
     <div className="p-5">
       <h1>Pokédex</h1>
-
       <PokemonTable data={data.results} />
     </div>
 
@@ -29,8 +28,11 @@ export default function Page({ data }: InferGetServerSidePropsType<typeof getSer
 
 // This gets called on every request
 export async function getServerSideProps() {
+  const page: number = 1
+  const limit = 20
+  const offset = (page - 1) * limit
   // Fetch data from external API
-  const res = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=20&offset=20`)
+  const res = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${limit}&offset=${offset}`)
   const data: Props = await res.json()
 
   // Pass data to the page via props
