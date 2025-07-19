@@ -1,3 +1,4 @@
+import PokemonTable from "@/components/PokemonTable"
 import { InferGetServerSidePropsType } from "next"
 
 type Pokemon = {
@@ -15,12 +16,14 @@ interface Props {
 export default function Page({ data }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   console.log(data)
   // Render data...
-  return(
-    <div>
-      <h1>
-        Helloooooo
-      </h1>
+  return (
+    <div className="p-5">
+      <h1>Pokédex</h1>
+
+      <PokemonTable data={data.results} />
     </div>
+
+
   )
 }
 
