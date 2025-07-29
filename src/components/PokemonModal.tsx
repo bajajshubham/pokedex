@@ -72,7 +72,7 @@ export default function PokemonModal({ pokemonName, onClose }: PokemonModalProps
           {info.getValue().replace('-', ' ')}
         </div>
       ),
-    }),
+    }) as ColumnDef<EvolutionTriggerData>,
     columnHelper.display({
       id: 'id',
       header: 'Trigger ID',
