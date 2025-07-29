@@ -126,7 +126,7 @@ export default function PokemonModal({ pokemonName, onClose }: PokemonModalProps
 
   if (error) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={handleBackdropClick}>
+      <div className="fixed inset-0 bg-black/75 flex items-center justify-center p-4 z-50" onClick={handleBackdropClick}>
         <div className="bg-white rounded-lg p-6 max-w-md w-full">
           <div className="text-center">
             <div className="text-red-600 text-xl mb-4">⚠️</div>
@@ -145,7 +145,7 @@ export default function PokemonModal({ pokemonName, onClose }: PokemonModalProps
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={handleBackdropClick}>
+    <div className="fixed inset-0 bg-black/75 flex items-center justify-center p-4 z-50" onClick={handleBackdropClick}>
       <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
