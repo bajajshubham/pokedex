@@ -16,6 +16,7 @@ export default function Home({ initialData, totalCount, initialSearch }: HomePro
   // Update data when search query changes
   useEffect(() => {
     const fetchData = async () => {
+      // Always fetch if search query changed, even when clearing search
       if (searchQuery !== initialSearch) {
         setIsLoading(true);
         try {
@@ -109,18 +110,18 @@ export default function Home({ initialData, totalCount, initialSearch }: HomePro
 }
 
 export const getServerSideProps: GetServerSideProps<HomeProps> = async ({ query }) => {
-  const search = (query.search as string) || '';
-  
+  const search = ((query.search as string) || '').trim();
+
   try {
     // Call the API logic directly instead of making HTTP request
     let filteredResults: PokemonData[] = [];
     let totalCount = 0;
-    
+
     if (search) {
       // For search, we need to fetch all Pokemon first
       const allPokemon = await fetchPokemonPage(2000, 0);
-      
-      filteredResults = allPokemon.results.filter(pokemon => 
+
+      filteredResults = allPokemon.results.filter(pokemon =>
         pokemon.name.toLowerCase().includes(search.toLowerCase())
       );
       totalCount = filteredResults.length;
@@ -133,7 +134,7 @@ export const getServerSideProps: GetServerSideProps<HomeProps> = async ({ query 
 
     // Get first 20 items for initial load
     const initialData = filteredResults.slice(0, 20);
-    
+
     return {
       props: {
         initialData,
@@ -143,7 +144,7 @@ export const getServerSideProps: GetServerSideProps<HomeProps> = async ({ query 
     };
   } catch (error) {
     console.error('Error in getServerSideProps:', error);
-    
+
     // Return empty data on error
     return {
       props: {
