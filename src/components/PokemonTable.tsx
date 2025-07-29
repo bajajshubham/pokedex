@@ -50,7 +50,7 @@ export default function PokemonTable({
           </div>
         </div>
       ),
-    }),
+    }) as ColumnDef<PokemonData>,
     columnHelper.display({
       id: 'actions',
       header: 'Actions',
@@ -119,7 +119,7 @@ export default function PokemonTable({
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
         )}
-        
+
         <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
           <table className="min-w-full divide-y divide-gray-300">
             <thead className="bg-gray-50">
@@ -133,9 +133,9 @@ export default function PokemonTable({
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </th>
                   ))}
                 </tr>
@@ -144,7 +144,7 @@ export default function PokemonTable({
             <tbody className="bg-white divide-y divide-gray-200">
               {table.getRowModel().rows.length === 0 ? (
                 <tr>
-                  <td 
+                  <td
                     colSpan={columns.length}
                     className="px-6 py-8 text-center text-gray-500"
                   >
@@ -207,7 +207,7 @@ export default function PokemonTable({
               {'>>'}
             </button>
           </div>
-          
+
           <div className="flex items-center gap-1">
             <span className="flex items-center gap-1">
               <div>Page</div>
