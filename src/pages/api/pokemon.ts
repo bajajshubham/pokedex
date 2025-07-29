@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { fetchPokemonPage, PokemonListResponse } from '@/utils/api';
+import { fetchPokemonPage } from '@/utils/api';
 import { PokemonData } from '@/types/types';
 
 interface ApiResponse {
