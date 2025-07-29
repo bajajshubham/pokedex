@@ -1,6 +1,0 @@
-@import "tailwindcss";
-@config "../tailwind.config.ts";
-
-body {
-  padding: 1rem;
-}
