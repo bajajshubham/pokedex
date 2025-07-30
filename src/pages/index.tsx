@@ -16,45 +16,43 @@ export default function Home({ initialData, totalCount, initialSearch }: HomePro
   // Update data when search query changes
   useEffect(() => {
     const fetchData = async () => {
-      // Always fetch if search query changed, even when clearing search
-      if (searchQuery !== initialSearch) {
-        setIsLoading(true);
-        try {
-          const params = new URLSearchParams({
-            start: '0',
-            size: '20'
-          });
+      // Always fetch when searchQuery changes, including when it becomes empty
+      setIsLoading(true);
+      try {
+        const params = new URLSearchParams({
+          start: '0',
+          size: '20'
+        });
 
-          // Only add globalFilter if searchQuery is not empty
-          if (searchQuery.trim()) {
-            params.append('globalFilter', searchQuery);
-          }
-
-          const response = await fetch(`/api/pokemon?${params}`);
-          if (!response.ok) throw new Error('Failed to fetch');
-
-          const data = await response.json();
-          setPokemonData(data.data);
-          setTotalRowCount(data.meta.totalRowCount);
-
-          // Update URL
-          const url = new URL(window.location.href);
-          if (searchQuery.trim()) {
-            url.searchParams.set('search', searchQuery);
-          } else {
-            url.searchParams.delete('search');
-          }
-          window.history.pushState({}, '', url);
-        } catch (error) {
-          console.error('Error fetching Pokemon:', error);
-        } finally {
-          setIsLoading(false);
+        // Only add globalFilter if searchQuery is not empty
+        if (searchQuery.trim()) {
+          params.append('globalFilter', searchQuery);
         }
+
+        const response = await fetch(`/api/pokemon?${params}`);
+        if (!response.ok) throw new Error('Failed to fetch');
+
+        const data = await response.json();
+        setPokemonData(data.data);
+        setTotalRowCount(data.meta.totalRowCount);
+
+        // Update URL
+        const url = new URL(window.location.href);
+        if (searchQuery.trim()) {
+          url.searchParams.set('search', searchQuery);
+        } else {
+          url.searchParams.delete('search');
+        }
+        window.history.pushState({}, '', url);
+      } catch (error) {
+        console.error('Error fetching Pokemon:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchData();
-  }, [searchQuery, initialSearch]);
+  }, [searchQuery]);
 
   const handleSearch = useCallback((search: string) => {
     setSearchQuery(search);
