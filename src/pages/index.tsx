@@ -12,50 +12,75 @@ export default function Home({ initialData, totalCount, initialSearch }: HomePro
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [selectedPokemon, setSelectedPokemon] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
 
-  // Update data when search query changes
+  // Update data when search query or pagination changes
   useEffect(() => {
-    const fetchData = async () => {
-      // Always fetch when searchQuery changes, including when it becomes empty
-      setIsLoading(true);
-      try {
-        const params = new URLSearchParams({
-          start: '0',
-          size: '20'
-        });
+    const timeoutId = setTimeout(() => {
+      const fetchData = async () => {
+        setIsLoading(true);
+        try {
+          const start = pagination.pageIndex * pagination.pageSize;
+          const params = new URLSearchParams({
+            start: start.toString(),
+            size: pagination.pageSize.toString()
+          });
 
-        // Only add globalFilter if searchQuery is not empty
-        if (searchQuery.trim()) {
-          params.append('globalFilter', searchQuery);
+          // Only add globalFilter if searchQuery is not empty
+          if (searchQuery.trim()) {
+            params.append('globalFilter', searchQuery);
+          }
+
+          const url = `/api/pokemon?${params.toString()}`;
+          console.log('Fetching data from:', url);
+
+          const response = await fetch(url);
+          console.log('Response status:', response.status, response.statusText);
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Response error:', errorText);
+            throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          console.log('Received data:', { dataLength: data.data?.length, totalCount: data.meta?.totalRowCount });
+
+          setPokemonData(data.data || []);
+          setTotalRowCount(data.meta?.totalRowCount || 0);
+
+          // Update URL
+          const urlObj = new URL(window.location.href);
+          if (searchQuery.trim()) {
+            urlObj.searchParams.set('search', searchQuery);
+          } else {
+            urlObj.searchParams.delete('search');
+          }
+          window.history.pushState({}, '', urlObj);
+        } catch (error) {
+          console.error('Error fetching Pokemon:', error);
+          // Set empty data on error to prevent infinite loading
+          setPokemonData([]);
+          setTotalRowCount(0);
+        } finally {
+          setIsLoading(false);
         }
+      };
 
-        const response = await fetch(`/api/pokemon?${params}`);
-        if (!response.ok) throw new Error('Failed to fetch');
+      fetchData();
+    }, 300); // 300ms debounce
 
-        const data = await response.json();
-        setPokemonData(data.data);
-        setTotalRowCount(data.meta.totalRowCount);
-
-        // Update URL
-        const url = new URL(window.location.href);
-        if (searchQuery.trim()) {
-          url.searchParams.set('search', searchQuery);
-        } else {
-          url.searchParams.delete('search');
-        }
-        window.history.pushState({}, '', url);
-      } catch (error) {
-        console.error('Error fetching Pokemon:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [searchQuery]);
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, pagination]);
 
   const handleSearch = useCallback((search: string) => {
     setSearchQuery(search);
+    // Reset to first page when searching
+    setPagination(prev => ({ ...prev, pageIndex: 0 }));
+  }, []);
+
+  const handlePaginationChange = useCallback((newPagination: { pageIndex: number; pageSize: number }) => {
+    setPagination(newPagination);
   }, []);
 
   const handleRowClick = useCallback((name: string) => {
@@ -91,6 +116,7 @@ export default function Home({ initialData, totalCount, initialSearch }: HomePro
               searchQuery={searchQuery}
               onSearch={handleSearch}
               onRowClick={handleRowClick}
+              onPaginationChange={handlePaginationChange}
               isLoading={isLoading}
             />
           </div>

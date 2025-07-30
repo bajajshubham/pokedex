@@ -9,6 +9,37 @@ interface ApiResponse {
   };
 }
 
+// Simple in-memory cache
+let pokemonCache: PokemonData[] | null = null;
+let cacheTimestamp: number = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+async function getCachedPokemon(): Promise<PokemonData[]> {
+  const now = Date.now();
+
+  // Return cached data if it's still fresh
+  if (pokemonCache && (now - cacheTimestamp) < CACHE_DURATION) {
+    console.log('Using cached Pokemon data');
+    return pokemonCache;
+  }
+
+  console.log('Fetching fresh Pokemon data from API');
+  try {
+    const allPokemon = await fetchPokemonPage(1500, 0);
+    pokemonCache = allPokemon.results;
+    cacheTimestamp = now;
+    return pokemonCache;
+  } catch (error) {
+    console.error('Failed to fetch Pokemon data:', error);
+    // If we have stale cache, use it
+    if (pokemonCache) {
+      console.log('Using stale cache due to API error');
+      return pokemonCache;
+    }
+    throw error;
+  }
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ message: 'Method not allowed' });
@@ -20,22 +51,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const searchQuery = (globalFilter as string).toLowerCase().trim();
 
   try {
+    // Get cached Pokemon data
+    const allPokemon = await getCachedPokemon();
+
     let filteredResults: PokemonData[] = [];
     let totalCount = 0;
-    
+
     if (searchQuery) {
-      // For search, we need to fetch all Pokemon first
-      const allPokemon = await fetchPokemonPage(2000, 0);
-      
-      filteredResults = allPokemon.results.filter(pokemon => 
+      // Filter cached data by search query
+      filteredResults = allPokemon.filter(pokemon =>
         pokemon.name.toLowerCase().includes(searchQuery)
       );
       totalCount = filteredResults.length;
     } else {
-      // No search, fetch all for pagination
-      const allPokemon = await fetchPokemonPage(2000, 0);
-      filteredResults = allPokemon.results;
-      totalCount = allPokemon.count;
+      // Use all cached data
+      filteredResults = allPokemon;
+      totalCount = allPokemon.length;
     }
 
     // Apply pagination
@@ -47,10 +78,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         totalRowCount: totalCount,
       },
     };
-    
+
     res.status(200).json(response);
   } catch (error) {
     console.error('API Error:', error);
-    res.status(500).json({ message: 'Failed to fetch Pokemon data' });
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    res.status(500).json({
+      message: 'Failed to fetch Pokemon data',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 }

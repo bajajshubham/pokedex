@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -18,7 +18,8 @@ export default function PokemonTable({
   onSearch,
   onRowClick,
   searchQuery,
-  isLoading = false
+  isLoading = false,
+  onPaginationChange
 }: PokemonTableProps) {
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -26,6 +27,13 @@ export default function PokemonTable({
   });
 
   const [globalFilter, setGlobalFilter] = useState(searchQuery);
+
+  // Notify parent when pagination changes
+  useEffect(() => {
+    if (onPaginationChange) {
+      onPaginationChange(pagination);
+    }
+  }, [pagination, onPaginationChange]);
 
   const columns = useMemo<ColumnDef<PokemonData>[]>(() => [
     columnHelper.display({
@@ -89,7 +97,9 @@ export default function PokemonTable({
 
   const handleSearch = (query: string) => {
     table.setGlobalFilter(query);
-    table.setPageIndex(0); // Reset to first page when searching
+    // Reset pagination to first page when searching
+    const newPagination = { pageIndex: 0, pageSize: pagination.pageSize };
+    setPagination(newPagination);
     onSearch(query); // Call parent component's search handler
   };
 
@@ -121,131 +131,154 @@ export default function PokemonTable({
         )}
 
         <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-          <table className="min-w-full divide-y divide-gray-300">
-            <thead className="bg-gray-50">
-              {table.getHeaderGroups().map(headerGroup => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map(header => (
-                    <th
-                      key={header.id}
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {table.getRowModel().rows.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={columns.length}
-                    className="px-6 py-8 text-center text-gray-500"
-                  >
-                    {isLoading ? 'Loading...' : globalFilter?.trim() ? 'No Pokémon found matching your search.' : 'No Pokémon available.'}
-                  </td>
-                </tr>
-              ) : (
-                table.getRowModel().rows.map(row => (
-                  <tr
-                    key={row.id}
-                    className="hover:bg-gray-50 cursor-pointer transition-colors"
-                    onClick={() => !isLoading && onRowClick(row.original.name)}
-                  >
-                    {row.getVisibleCells().map(cell => (
-                      <td
-                        key={cell.id}
-                        className="px-6 py-4 whitespace-nowrap text-sm"
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-300">
+              <thead className="bg-gray-50">
+                {table.getHeaderGroups().map(headerGroup => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map(header => (
+                      <th
+                        key={header.id}
+                        className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6"
                       >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                      </th>
                     ))}
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ))}
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {table.getRowModel().rows.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={columns.length}
+                      className="px-3 py-8 text-center text-gray-500 sm:px-6"
+                    >
+                      {isLoading ? 'Loading...' : globalFilter?.trim() ? 'No Pokémon found matching your search.' : 'No Pokémon available.'}
+                    </td>
+                  </tr>
+                ) : (
+                  table.getRowModel().rows.map(row => (
+                    <tr
+                      key={row.id}
+                      className="hover:bg-gray-50 cursor-pointer transition-colors"
+                      onClick={() => !isLoading && onRowClick(row.original.name)}
+                    >
+                      {row.getVisibleCells().map(cell => (
+                        <td
+                          key={cell.id}
+                          className="px-3 py-4 whitespace-nowrap text-sm sm:px-6"
+                        >
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      ))}
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      {/* TanStack Built-in Pagination */}
+      {/* Responsive Pagination */}
       {totalCount > 0 && (
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          {/* Mobile: Stack vertically, Desktop: Flex row */}
+
+          {/* Navigation Buttons */}
+          <div className="flex items-center justify-center gap-1 sm:justify-start">
             <button
-              className="border rounded p-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center px-2 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-500 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={() => table.setPageIndex(0)}
               disabled={!table.getCanPreviousPage() || isLoading}
+              aria-label="Go to first page"
             >
+              <span className="sr-only">First page</span>
               {'<<'}
             </button>
             <button
-              className="border rounded p-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center px-2 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-500 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage() || isLoading}
+              aria-label="Go to previous page"
             >
+              <span className="sr-only">Previous page</span>
               {'<'}
             </button>
             <button
-              className="border rounded p-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center px-2 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-500 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage() || isLoading}
+              aria-label="Go to next page"
             >
+              <span className="sr-only">Next page</span>
               {'>'}
             </button>
             <button
-              className="border rounded p-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center px-2 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-500 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={() => table.setPageIndex(table.getPageCount() - 1)}
               disabled={!table.getCanNextPage() || isLoading}
+              aria-label="Go to last page"
             >
+              <span className="sr-only">Last page</span>
               {'>>'}
             </button>
           </div>
 
-          <div className="flex items-center gap-1">
-            <span className="flex items-center gap-1">
-              <div>Page</div>
-              <strong>
-                {table.getState().pagination.pageIndex + 1} of{' '}
-                {table.getPageCount()}
-              </strong>
+          {/* Page Info */}
+          <div className="flex items-center justify-center text-sm text-gray-700">
+            <span>
+              Page <strong>{table.getState().pagination.pageIndex + 1}</strong> of{' '}
+              <strong>{table.getPageCount()}</strong>
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-700">Go to page:</span>
-            <input
-              type="number"
-              defaultValue={table.getState().pagination.pageIndex + 1}
-              onChange={e => {
-                const page = e.target.value ? Number(e.target.value) - 1 : 0
-                table.setPageIndex(page)
-              }}
-              className="border p-1 rounded w-16 text-center"
-              disabled={isLoading}
-            />
-          </div>
+          {/* Page Size and Go To Page */}
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+            {/* Go to page - Hidden on mobile, shown on larger screens */}
+            <div className="hidden sm:flex items-center gap-2">
+              <label htmlFor="goto-page" className="text-sm text-gray-700">Go to:</label>
+              <input
+                id="goto-page"
+                type="number"
+                min="1"
+                max={table.getPageCount()}
+                defaultValue={table.getState().pagination.pageIndex + 1}
+                onChange={e => {
+                  const page = e.target.value ? Number(e.target.value) - 1 : 0
+                  table.setPageIndex(page)
+                }}
+                className="border border-gray-300 rounded px-2 py-1 w-16 text-center text-sm"
+                disabled={isLoading}
+              />
+            </div>
 
-          <select
-            value={table.getState().pagination.pageSize}
-            onChange={e => {
-              table.setPageSize(Number(e.target.value))
-            }}
-            disabled={isLoading}
-            className="border rounded p-1"
-          >
-            {[10, 20, 30, 40, 50].map(pageSize => (
-              <option key={pageSize} value={pageSize}>
-                Show {pageSize}
-              </option>
-            ))}
-          </select>
+            {/* Page size selector */}
+            <div className="flex items-center gap-2 justify-center sm:justify-start">
+              <label htmlFor="page-size" className="text-sm text-gray-700 whitespace-nowrap">Per page:</label>
+              <select
+                id="page-size"
+                value={table.getState().pagination.pageSize}
+                onChange={e => {
+                  table.setPageSize(Number(e.target.value))
+                }}
+                disabled={isLoading}
+                className="border border-gray-300 rounded px-2 py-1 text-sm"
+              >
+                {[10, 20, 30, 40, 50].map(pageSize => (
+                  <option key={pageSize} value={pageSize}>
+                    {pageSize}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
       )}
     </div>

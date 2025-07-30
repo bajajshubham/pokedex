@@ -85,6 +85,7 @@ export interface PokemonTableProps {
   onRowClick: (name: string) => void;
   searchQuery: string;
   isLoading?: boolean;
+  onPaginationChange?: (pagination: { pageIndex: number; pageSize: number }) => void;
 }
 
 export interface SearchBarProps {
